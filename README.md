@@ -1,119 +1,747 @@
-# RailWatch 🚆
-### AI-Assisted Railway Land Monitoring and Encroachment Detection
+# Railwatch + TinyFish Integration
 
-RailWatch is an AI-assisted railway land monitoring prototype designed to help identify potential encroachments and environmental changes near railway infrastructure. By leveraging computer vision, geospatial imagery, and community-reported observations, the project aims to support railway authorities in prioritising inspections and identifying locations that may require closer attention.
+## 1. Overview
 
-Rather than replacing existing railway inspection teams, RailWatch is envisioned as a decision-support system that helps make inspections more targeted, timely, and data-informed.
+Railwatch is a railway-corridor monitoring and inspection-prioritisation
+prototype for the Delhi railway network. It combines satellite imagery,
+weather and hydrological observations, vegetation and water-change
+indicators, railway/geographic references, public notices and geotagged
+citizen reports.
 
-## 🎯 Problem Statement
+**TinyFish adds a web intelligence layer.** It can search the live web,
+fetch rendered pages into structured content, and run goal-driven
+browser workflows on supported public websites. Railwatch can use it to
+discover and extract public information that is not conveniently
+available through a structured API.
 
-Indian Railways manages an extensive network of railway tracks, land parcels, and associated infrastructure. Monitoring these areas involves substantial fieldwork, periodic surveys, and the assessment of changing conditions along railway corridors.
+TinyFish is not a satellite data provider, GIS system, weather station
+or railway land-record authority. Use official APIs and authorised
+datasets for measurements and authoritative boundaries.
 
-New construction, permanent structures, vegetation growth, and other changes near railway infrastructure may warrant further investigation. Identifying such changes across large areas can be challenging when relying solely on periodic manual inspections.
+> **Safety and scope:** Railwatch is a decision-support prototype. It
+> does not replace official railway inspections, engineering judgement,
+> emergency response procedures or authorised land-record verification.
+> An AI alert is not proof of a safety defect or illegal encroachment.
 
-RailWatch explores how computer vision and geospatial data can assist in flagging potentially significant changes for human review.
+## 2. What TinyFish contributes
 
-## 💡 Proposed Solution
+TinyFish currently presents four main capabilities:
 
-RailWatch aims to combine visual analysis and location-based reporting into a unified railway monitoring workflow.
+  --------------------------------------------------------------------------
+  Capability              Railwatch use              Recommended priority
+  ----------------------- -------------------------- -----------------------
+  TinySearch              Discover public railway    High
+                          notices, flood bulletins,  
+                          project updates and        
+                          environmental reports      
 
-The initial focus is **railway land encroachment detection**, particularly the identification of buildings and permanent structures that may warrant inspection.
+  TinyFetch               Read a known public        High
+                          webpage and extract        
+                          content as Markdown, JSON  
+                          or HTML                    
 
-The proposed system includes:
+  TinyAgent / Web Agent   Navigate a multi-step      Medium
+                          public website workflow    
+                          and return structured      
+                          results                    
 
-- **Building Detection:** Use an existing OpenCV-based computer vision detector to identify buildings or structures in uploaded imagery.
-- **Image-Based Monitoring:** Analyse user-provided or publicly accessible imagery of railway-adjacent areas.
-- **Potential Encroachment Flagging:** Highlight detected structures for further investigation rather than automatically declaring them illegal encroachments.
-- **Location-Based Reporting:** Associate observations with available location information to help identify areas requiring inspection.
-- **Community Reporting:** Provide a proposed interface for submitting geotagged photographs and reports of suspected encroachment.
-- **Future Change Monitoring:** Compare imagery captured at different times to identify newly constructed or altered structures, subject to data availability and image alignment.
+  TinyBrowser             Run custom                 Later / only if needed
+                          Playwright/Puppeteer/CDP   
+                          automation in a managed    
+                          browser session            
+  --------------------------------------------------------------------------
 
-## 🧠 Technical Approach
+Official starting points:
 
-The initial prototype focuses on integrating an existing building detector into the RailWatch application workflow.
+-   TinyFish website: https://www.tinyfish.ai/
+-   TinyFish Web Agent: https://agent.tinyfish.ai/
+-   TinyFish cookbook and API examples:
+    https://github.com/tinyfish-io/tinyfish-cookbook
+-   TinyFish Browser overview: https://www.tinyfish.ai/browser
 
-The intended processing pipeline is:
+Check current official documentation for endpoint schemas, limits,
+pricing, authentication and terms before deploying. Product details can
+change.
 
-1. **Image Input:** Receive an image of a railway-adjacent area.
-2. **Preprocessing:** Prepare the image for the existing computer vision model.
-3. **Building Detection:** Run the integrated detector to identify candidate structures.
-4. **Visualisation:** Display the input image and the detector's output, including available bounding boxes or other model outputs.
-5. **Review and Flagging:** Present candidate structures for further investigation.
-6. **Location Association:** Attach available geographic metadata or user-provided location information to the observation.
+## 3. Proposed Railwatch + TinyFish architecture
 
-Detection alone cannot establish whether a structure lies within railway-owned land. Reliable encroachment assessment requires suitable railway land-boundary information, geographic alignment, and human verification.
+``` text
+             STRUCTURED / GEOSPATIAL DATA
+   Copernicus | Earth Engine | Weather APIs | CWC | OSM
+                         |
+                         v
+              Data collection and processing
+                         |
+                         v
+                 PostGIS / Object Storage
+                         ^
+                         |
+                 TINYFISH WEB LAYER
+        +----------------+------------------+
+        |                |                  |
+     TinySearch       TinyFetch          TinyAgent
+   Discover pages   Extract page data   Multi-step research
+        |                |                  |
+        +----------------+------------------+
+                         |
+                         v
+            Source validation and normalisation
+                         |
+                         v
+               Public information records
+                         |
+                         v
+         Segment matching + human verification
+                         |
+                         v
+       Vegetation / Flood / Encroachment models
+                         |
+                         v
+               Explainable risk engine
+                         |
+                         v
+             Railwatch map and dashboard
+```
 
-## 🛠️ Technology Stack
+### Recommended division of responsibility
 
-- **Python** — Core application and model integration
-- **OpenCV** — Image processing and computer vision
-- **Existing Building Detection Model** — Structure detection within input imagery
-- **Geospatial Data** — Location association and potential future spatial analysis
-- **Web Interface** — Planned or ongoing integration for image uploads and reporting
+-   Use Copernicus / Earth Engine for satellite observations and derived
+    raster features.
+-   Use weather and hydrology sources for rainfall and water-level
+    measurements.
+-   Use TinyFish to find, read and monitor relevant public web
+    information.
+-   Use official railway records and authorised GIS data for railway
+    asset and land-boundary verification.
+-   Use Railwatch's own upload service for citizen photographs.
+-   Use human review before a public web report or citizen complaint
+    influences a high-priority operational alert.
 
-The precise frameworks, dependencies, and model architecture depend on the existing detector and the application's implementation.
+## 4. Useful TinyFish workflows for Railwatch
 
-## 🚧 Current Development Scope
+### Workflow A --- Discover public railway updates
 
-The project is being developed as a prototype, with the following priorities:
+Search for public information such as:
 
-- [ ] Integrate the existing building detector into RailWatch.
-- [ ] Support image uploads and display detection results.
-- [ ] Develop a workflow for flagging potential encroachment.
-- [ ] Associate detections with geographic information where available.
-- [ ] Establish a suitable dataset for railway-adjacent structures.
-- [ ] Explore comparison of imagery from different dates.
-- [ ] Develop a community-reporting interface.
-- [ ] Evaluate detection performance on representative railway-area imagery.
+-   Delhi railway maintenance or infrastructure notices.
+-   Public railway project updates.
+-   Publicly released inspection or safety-related reports.
+-   Government announcements concerning drainage, bridges or railway
+    corridors.
 
-## 🔬 Research and Future Scope
+Example search themes:
 
-Potential extensions include:
+``` text
+Delhi railway drainage work public notice
+Delhi railway bridge maintenance public update
+Delhi railway land encroachment public notice
+Delhi railway flood waterlogging news
+Delhi railway infrastructure project update
+```
 
-- **Temporal Change Detection:** Identify structures that appear in newer imagery but not in historical imagery.
-- **Geospatial Analysis:** Compare detected structures against verified railway land boundaries when reliable spatial data becomes available.
-- **Vegetation Monitoring:** Explore vegetation encroachment and changes near railway infrastructure.
-- **Risk-Based Prioritisation:** Rank observations using factors such as change evidence, proximity to verified boundaries, and report history.
-- **Weather and Environmental Context:** Incorporate relevant external information to help contextualise observations.
-- **Human-in-the-Loop Verification:** Enable authorised personnel to review flagged locations and record inspection outcomes.
+Search results are leads, not verified facts. Save the original source
+URL, publisher and publication date. A news report or search snippet
+must not be treated as an official engineering finding.
 
-These capabilities are proposed extensions and should not be interpreted as already implemented.
+### Workflow B --- Fetch and extract a known page
 
-## ⚠️ Limitations
+When a source URL is known, use TinyFetch to retrieve rendered page
+content. Extract only fields needed by Railwatch:
 
-- A building detector identifies visual patterns; it does not independently determine land ownership or legal encroachment.
-- Satellite and aerial imagery may lack the resolution needed to identify small structures or precise boundaries.
-- Images from different dates may differ in zoom, resolution, perspective, and alignment, which can affect change detection.
-- Reliable evaluation requires representative data and verified ground-truth annotations.
-- Automated flags are preliminary indicators and must be verified before operational decisions are made.
+-   Page title.
+-   Publisher or issuing organisation.
+-   Publication date.
+-   Notice or report type.
+-   Location or railway station mentioned.
+-   Relevant summary.
+-   Original source URL.
 
-## 🚀 Getting Started
+### Workflow C --- Monitor public bulletins
 
-Setup instructions will be finalised according to the repository's actual application structure, model files, and dependencies.
+Run scheduled searches for selected topics, then compare new source URLs
+and publication dates against previously stored records. Do not
+repeatedly crawl a site at high frequency. Respect its terms, robots
+instructions, rate limits and access restrictions.
 
-General workflow:
+### Workflow D --- Multi-step public portal research
 
-1. Clone the repository.
-2. Set up a compatible Python environment.
-3. Install the project's dependencies.
-4. Configure the existing building detection model and its required weights.
-5. Launch the application using the entry point documented in the repository.
-6. Upload an image and inspect the detection output.
+Use TinyAgent only where a public portal requires navigation, filters,
+pagination or other multi-step browsing. Give the agent a narrow task
+and request structured JSON with source URLs. Do not ask it to infer
+legal ownership, engineering safety or facts not stated on the source
+page.
 
-See the project's dependency files and application instructions for the exact commands and configuration requirements.
+## 5. TinyFish API setup
 
-## 🌍 Vision
+1.  Create an account using the official TinyFish website.
+2.  Create an API key in the TinyFish dashboard.
+3.  Store the key as an environment variable.
+4.  Do not put the API key in frontend code, GitHub, notebooks committed
+    to a repository, or public logs.
+5.  Check current account limits and pricing before scheduling recurring
+    jobs.
 
-RailWatch aims to explore how AI-assisted visual monitoring can complement traditional railway inspections by helping identify locations that may deserve earlier or more detailed review.
+Create a `.env` file locally:
 
-**The objective is not to replace field inspections, but to help direct attention where it may be needed most.**
+``` env
+TINYFISH_API_KEY=replace_with_your_key
+```
 
-## 📌 Project Status
+Add `.env` to `.gitignore`:
 
-RailWatch is an evolving prototype under active development. Its initial focus is building detection as a foundation for a potential railway land encroachment monitoring workflow.
+``` gitignore
+.env
+.env.*
+!.env.example
+```
 
-The reliability of the complete system will depend on model evaluation, suitable geospatial data, temporal imagery, and verification by human inspectors.
+Create a safe `.env.example`:
 
-## 📄 License
+``` env
+TINYFISH_API_KEY=
+```
 
-A license has not yet been specified. Usage, modification, and redistribution terms should be added once a project license is selected.
+Install dependencies:
+
+``` bash
+pip install requests python-dotenv
+```
+
+## 6. TinySearch --- discover relevant pages
+
+The TinyFish cookbook documents a Search endpoint at
+`https://api.search.tinyfish.ai`.
+
+Example Python request:
+
+``` python
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+API_KEY = os.environ["TINYFISH_API_KEY"]
+
+def tinyfish_search(query: str):
+    response = requests.get(
+        "https://api.search.tinyfish.ai",
+        params={"query": query},
+        headers={"X-API-Key": API_KEY},
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()
+
+results = tinyfish_search(
+    "Delhi railway drainage flood public notice"
+)
+print(results)
+```
+
+Inspect the actual response structure from your account/API version
+before mapping it into the Railwatch database. Store development
+responses with secrets removed so your team can adapt the parser to the
+current response schema.
+
+## 7. TinyFetch --- extract content from known URLs
+
+The cookbook documents a Fetch endpoint at
+`https://api.fetch.tinyfish.ai`, accepting a list of URLs.
+
+Example:
+
+``` python
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+API_KEY = os.environ["TINYFISH_API_KEY"]
+
+def tinyfish_fetch(urls: list[str]):
+    response = requests.post(
+        "https://api.fetch.tinyfish.ai",
+        headers={
+            "X-API-Key": API_KEY,
+            "Content-Type": "application/json",
+        },
+        json={"urls": urls},
+        timeout=120,
+    )
+    response.raise_for_status()
+    return response.json()
+
+pages = tinyfish_fetch([
+    "https://indianrailways.gov.in/"
+])
+print(pages)
+```
+
+Use a URL allowlist in production. Do not accept arbitrary URLs from
+anonymous users and fetch them on the backend. Validate schemes and
+hosts to reduce server-side request forgery (SSRF) risks. Never fetch
+private network addresses, localhost, cloud metadata endpoints or
+internal services.
+
+## 8. TinyAgent --- goal-driven web research
+
+TinyAgent is useful for public websites where information requires
+multiple navigation steps.
+
+The TinyFish cookbook documents the streaming endpoint:
+
+`https://agent.tinyfish.ai/v1/automation/run-sse`
+
+Example Python starter:
+
+``` python
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+API_KEY = os.environ["TINYFISH_API_KEY"]
+
+def tinyfish_agent(url: str, goal: str):
+    response = requests.post(
+        "https://agent.tinyfish.ai/v1/automation/run-sse",
+        headers={
+            "X-API-Key": API_KEY,
+            "Content-Type": "application/json",
+        },
+        json={
+            "url": url,
+            "goal": goal,
+        },
+        stream=True,
+        timeout=300,
+    )
+    response.raise_for_status()
+
+    for line in response.iter_lines(decode_unicode=True):
+        if line:
+            print(line)
+
+tinyfish_agent(
+    "https://indianrailways.gov.in/",
+    """
+    Review publicly accessible pages relevant to Delhi railway
+    infrastructure updates. Return only information explicitly
+    present on the pages. Provide JSON records with:
+    title, issuing_organisation, publication_date, location,
+    summary, source_url, and uncertainty_notes.
+    Do not infer railway land ownership or safety status.
+    """
+)
+```
+
+This example prints the SSE stream for inspection. Check the current API
+documentation for event framing and final-result payload, then parse it
+into a validated internal schema. Do not assume each streamed line is a
+complete JSON result.
+
+## 9. Normalised Railwatch web intelligence schema
+
+Store TinyFish outputs as source records. Keep extracted statements
+separate from verified railway observations.
+
+Example JSON record:
+
+``` json
+{
+  "record_id": "WEB-DEL-0001",
+  "provider": "tinyfish",
+  "capability": "search_fetch",
+  "source_url": "https://example.gov.in/public-notice",
+  "publisher": "Example public authority",
+  "title": "Example public infrastructure notice",
+  "published_at": null,
+  "retrieved_at": "2026-10-14T12:00:00+05:30",
+  "location_text": "Delhi",
+  "railway_segment_id": null,
+  "topic": "drainage",
+  "summary": "Illustrative summary; replace with extracted source content.",
+  "source_type": "official_notice",
+  "verification_status": "pending",
+  "reviewer_id": null,
+  "reviewed_at": null,
+  "content_hash": null
+}
+```
+
+The example URL and content are placeholders, not real notices.
+
+Suggested database table: `web_intelligence_records`.
+
+  Field                 Type                Purpose
+  --------------------- ------------------- ---------------------------------------
+  record_id             UUID / VARCHAR      Unique record
+  provider              VARCHAR             `tinyfish`
+  capability            VARCHAR             Search, Fetch or Agent
+  source_url            TEXT                Original source
+  publisher             TEXT                Issuing organisation
+  title                 TEXT                Page or notice title
+  published_at          TIMESTAMPTZ         Source publication date, if available
+  retrieved_at          TIMESTAMPTZ         Collection timestamp
+  location_text         TEXT                Location as written by source
+  segment_id            VARCHAR, nullable   Linked segment after review
+  topic                 VARCHAR             Flood, drainage, project, land, etc.
+  summary               TEXT                Concise extracted summary
+  raw_payload_uri       TEXT                Secure reference to raw response
+  verification_status   VARCHAR             Pending, verified, rejected
+  reviewer_id           TEXT, nullable      Authorised reviewer
+  content_hash          TEXT                Duplicate detection
+
+Keep a provenance table to record source licence, publisher, retrieval
+time, original URL and permitted reuse.
+
+## 10. How web intelligence should affect risk assessments
+
+TinyFish outputs should not directly assign a railway segment to an
+urgent category.
+
+Recommended flow:
+
+1.  TinyFish discovers or extracts a public report.
+2.  Railwatch stores the source URL and retrieval timestamp.
+3.  A parser converts the response into the normalised schema.
+4.  A location-matching step proposes a station, corridor or segment.
+5.  A human reviewer checks the source and location.
+6.  If relevant, the verified information is made available to the risk
+    engine.
+7.  The risk engine records which evidence contributed to the alert.
+
+Example:
+
+-   A public bulletin mentions waterlogging near a railway location.
+-   Railwatch stores it as an unverified web intelligence record.
+-   The location matcher suggests a nearby segment.
+-   A reviewer confirms that the report is relevant.
+-   Satellite imagery and rainfall observations are checked
+    independently.
+-   The system creates an inspection recommendation if the combined
+    evidence meets the prototype's review policy.
+
+A public news article alone should not trigger a claim that a railway
+segment is unsafe.
+
+## 11. Suggested source categories and search schedule
+
+  -----------------------------------------------------------------------
+  Topic                   Example query           Prototype schedule
+  ----------------------- ----------------------- -----------------------
+  Railway works           Delhi railway           Daily
+                          maintenance work public 
+                          notice                  
+
+  Flooding                Delhi railway           Every 6 hours during
+                          waterlogging flood      monsoon monitoring;
+                          bulletin                otherwise daily
+
+  Bridges                 Delhi railway bridge    Daily
+                          inspection or repair    
+                          public update           
+
+  Encroachment            Delhi railway land      Weekly
+                          encroachment official   
+                          notice                  
+
+  Drainage                Delhi railway drainage  Daily during monsoon
+                          improvement public      
+                          notice                  
+
+  Environmental changes   Delhi railway corridor  Weekly
+                          vegetation clearance    
+                          notice                  
+  -----------------------------------------------------------------------
+
+These are suggested prototype schedules, not a requirement to crawl
+every website at that frequency. Prefer official feeds and APIs when
+available. Use slower schedules for sites with restrictive terms or
+infrequently updated content.
+
+## 12. Recommended project structure
+
+``` text
+railwatch/
+├── README.md
+├── .env.example
+├── .gitignore
+├── data_collection/
+│   ├── satellite/
+│   │   ├── sentinel_download.py
+│   │   └── earth_engine_processing.py
+│   ├── weather/
+│   │   └── weather_download.py
+│   ├── geography/
+│   │   └── osm_download.py
+│   └── tinyfish/
+│       ├── search_public_sources.py
+│       ├── fetch_public_pages.py
+│       ├── agent_public_research.py
+│       ├── parse_sse.py
+│       └── normalise_records.py
+├── preprocessing/
+│   ├── calculate_ndvi.py
+│   ├── flood_mapping.py
+│   └── segment_matching.py
+├── models/
+│   ├── vegetation/
+│   ├── flooding/
+│   └── encroachment/
+├── backend/
+│   ├── main.py
+│   ├── routes/
+│   ├── database/
+│   └── services/
+├── frontend/
+├── schemas/
+│   ├── web_intelligence.schema.json
+│   └── segment_observation.schema.json
+└── notebooks/
+    └── data_quality_checks.ipynb
+```
+
+## 13. Environment variables and security
+
+-   Keep TinyFish API keys on the backend only.
+-   Never expose API keys in React or browser JavaScript.
+-   Restrict which domains TinyFish jobs may visit.
+-   Validate and sanitise extracted content before storing or displaying
+    it.
+-   Treat webpage text as untrusted input; pages can contain misleading
+    content or prompt-injection attempts.
+-   Do not let extracted page instructions change system prompts, call
+    arbitrary tools or execute code.
+-   Do not submit private citizen data, personal information or
+    confidential railway records to external web agents unless
+    explicitly authorised and covered by the relevant privacy and
+    security arrangements.
+-   Use official, public pages and respect website terms, copyright,
+    robots instructions and rate limits.
+-   Do not attempt to bypass authentication, paywalls or access
+    controls.
+-   Keep audit logs for queries, URLs, retrieval timestamps, reviewer
+    decisions and downstream alerts.
+
+## 14. Data quality and verification rules
+
+Before a TinyFish record can influence a segment assessment, check:
+
+-   Does the source URL exist and belong to the claimed publisher?
+-   Is the publisher an official authority, reputable media source or
+    another clearly identified source?
+-   Is the publication date known?
+-   Is the report about Delhi and the relevant railway location?
+-   Does it describe an observation, proposal, planned work or confirmed
+    incident?
+-   Is the same report duplicated elsewhere?
+-   Has a human reviewer confirmed its relevance?
+-   Is the record still current?
+
+Use explicit statuses:
+
+-   `pending`: retrieved but not reviewed.
+-   `verified`: source and relevance checked.
+-   `rejected`: irrelevant, misleading or unsupported.
+-   `duplicate`: same underlying report already stored.
+-   `expired`: no longer current for operational context.
+
+## 15. Hackathon implementation plan
+
+### Phase 1 --- Setup
+
+-   Create TinyFish account and API key.
+-   Add API key to backend environment.
+-   Test TinySearch with one Delhi railway query.
+-   Test TinyFetch with one known public page.
+-   Save example responses securely.
+
+### Phase 2 --- Build the web intelligence collector
+
+-   Create a small allowlist of official public domains.
+-   Add search queries for railway, flood, drainage and infrastructure
+    topics.
+-   Fetch relevant result pages.
+-   Parse source URL, title, publisher, date and summary.
+-   Save normalised records to PostgreSQL.
+
+### Phase 3 --- Add verification
+
+-   Build an admin review queue.
+-   Show the original source beside extracted text.
+-   Allow a reviewer to verify, reject or mark duplicate.
+-   Add optional segment matching after location review.
+
+### Phase 4 --- Integrate with Railwatch
+
+-   Display verified public reports on the map.
+-   Show source and retrieval date.
+-   Link reports to satellite and weather observations.
+-   Add evidence references to each inspection recommendation.
+-   Keep web intelligence as supporting evidence, not an independent
+    safety verdict.
+
+### Phase 5 --- Demonstration
+
+For the hackathon demo:
+
+1.  Search for a public Delhi railway infrastructure update using
+    TinySearch.
+2.  Fetch one relevant public page using TinyFetch.
+3.  Extract a structured record.
+4.  Show the source URL and publication date.
+5.  Have an admin verify the record.
+6.  Link it to a candidate railway segment.
+7.  Show the record alongside satellite, rainfall and citizen-report
+    evidence on the Railwatch dashboard.
+
+Use clearly labelled sample records if no relevant live public notice is
+found. Never fabricate an official alert.
+
+## 16. Testing checklist
+
+-   [ ] API key is stored in backend environment variables.
+-   [ ] TinySearch request succeeds.
+-   [ ] TinyFetch request succeeds.
+-   [ ] TinyAgent SSE output is parsed according to current
+    documentation.
+-   [ ] Errors, timeouts and rate limits are handled.
+-   [ ] Duplicate source URLs are detected.
+-   [ ] Publication date and retrieval date are stored separately.
+-   [ ] Every extracted record retains its source URL.
+-   [ ] Unverified records cannot create an urgent operational alert.
+-   [ ] Human review and audit trail are available.
+-   [ ] Domain allowlist and SSRF protections are enabled.
+-   [ ] No personal or confidential data is sent to TinyFish without
+    authorisation.
+
+## 17. Official TinyFish references
+
+-   Main website: https://www.tinyfish.ai/
+-   Web Agent: https://agent.tinyfish.ai/
+-   Cookbook / examples:
+    https://github.com/tinyfish-io/tinyfish-cookbook
+-   Browser API overview: https://www.tinyfish.ai/browser
+-   Agent API endpoint used in cookbook examples:
+    https://agent.tinyfish.ai/v1/automation/run-sse
+-   Search API endpoint used in cookbook examples:
+    https://api.search.tinyfish.ai
+-   Fetch API endpoint used in cookbook examples:
+    https://api.fetch.tinyfish.ai
+
+The cookbook includes example REST calls for Search, Fetch and Agent.
+Verify the latest request and response schemas in official documentation
+before production use.
+
+------------------------------------------------------------------------
+
+## 18. Final recommendation
+
+For Railwatch, use TinyFish as the **Public Web Intelligence
+Collector**.
+
+The strongest division of work is:
+
+-   Copernicus / Earth Engine: satellite imagery and remote-sensing
+    analysis.
+-   IMD / Open-Meteo / CWC: weather and hydrological information.
+-   OpenStreetMap and authorised railway records: geographic references.
+-   TinyFish: discovery and extraction of relevant public web
+    information.
+-   Citizen reporting: local photographs and complaints.
+-   Railwatch AI: image analysis, change detection and
+    inspection-priority support.
+-   Human reviewers: source verification and operational decisions.
+
+This makes TinyFish a useful additional layer without confusing
+web-reported information with measured environmental data or official
+railway records.8
+
+**Project:** Railwatch\
+**Integration:** TinyFish Web Intelligence\
+**Geographical scope:** Delhi railway network\
+**Target:** Hackathon / startup prototype\
+**Document status:** Integration plan; verify current TinyFish API
+documentation, terms and pricing before implementation.
+
+
+## Aerial Encroachment Analysis (integrated module)
+
+The teammate's aerial-image change detection prototype is available from the **Aerial Analysis**
+tab. It runs inside the existing Express server and keeps the existing GIS, TinyFish intelligence,
+citizen-report, review, and work-order flows intact.
+
+### Additional runtime requirement
+
+Install Python 3.10+ and the computer-vision dependencies:
+
+```bash
+python3 -m pip install opencv-python numpy
+npm install
+npm run dev
+```
+
+The integrated analysis API uses the existing server on port 5000. The teammate's standalone
+module is under `encroachment/` (`cv/detect.py`, `config/sections.json`, demo imagery, and review
+dashboard). Analysis output is stored in `encroachment/data/analyses/`.
+
+**Prototype limitation:** the included demo imagery is synthetic. Validate with representative,
+properly georeferenced imagery and railway boundary records before using detections operationally.
+
+
+## Prototype role login
+
+The current demo includes a role-selection sign-in screen:
+
+- **Citizen:** enter a phone number (the prototype does not send or verify an OTP). Citizens can view the GIS map and submit/view citizen reports.
+- **Railway employee:** demo Rail ID `RAIL001`, password `RailWatch@123`. Employees can use the TinyFish Intel Hub, Review Desk, Work Orders, Aerial Analysis, and read citizen reports without submitting citizen complaints.
+
+**Security limitation:** this is client-side demonstration login and role-based UI visibility, not production authentication. The demo employee credentials are present in the frontend source, and the existing API routes are not protected by authenticated server-side role checks. Before any real deployment, replace this with server-side credential verification, secure sessions or short-lived tokens, OTP verification for citizens, and role authorization on every protected API endpoint. Do not use the demo credentials in a real environment.
+
+## Basemap fallback
+
+Dark and Voyager use CARTO's public raster basemap endpoints without an API-key query parameter. If CARTO tiles fail to load due to network, DNS, browser extension, or provider availability, the map automatically falls back to OpenStreetMap and shows a notice.
+
+## 8. Secure sign-in and role permissions
+
+The app now uses opaque server-side sessions. The session identifier is random, stored in an HttpOnly cookie, uses SameSite=Strict, expires after eight hours of inactivity, and is marked Secure in production. The session store is currently in process memory, so sessions are invalidated on server restart and this configuration is intended for a single-instance prototype. For multi-instance production deployment, replace the in-memory session map with a shared Redis-backed store and configure HTTPS, backups, monitoring and secret management.
+
+### Configure railway employee access
+
+1. Copy `.env.example` to `.env`.
+2. Set a private `RAIL_EMPLOYEE_ID` and a strong, unique `RAIL_EMPLOYEE_PASSWORD`.
+3. Never commit `.env` or share the password in the UI or source control.
+4. Restart the server after changing environment variables.
+
+Example only (replace both values with your own; do not reuse this example password):
+
+```env
+RAIL_EMPLOYEE_ID=your-private-rail-id
+RAIL_EMPLOYEE_PASSWORD=replace-with-a-long-unique-password
+```
+
+There are no built-in employee credentials. If these variables are absent, employee login fails closed and reports that configuration is required.
+
+### Configure citizen phone verification
+
+Citizen access now requires a one-time SMS code; entering a phone number alone is not identity verification. Configure `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER` to send SMS messages. For local development only, `ALLOW_DEV_OTP=true` logs the code to the backend terminal when `NODE_ENV` is not `production`. Do not enable that option in production.
+
+### Role enforcement
+
+The backend checks the session and role for protected endpoints, not only the visible navigation. Citizens can submit reports and read report status; employees can view citizen reports, use intelligence/review functions, access aerial analysis, and create inspection work orders. Employee-only aerial evidence files are also behind the session check. Mutating requests are restricted to configured frontend origins.
+
+## 9. Historical satellite imagery workflow
+
+The Aerial Analysis screen is now section-first rather than demo-first. Select a Delhi corridor section, choose an earlier and later target date, and select **Fetch imagery & analyse**. The server requests Sentinel-2 L2A true-colour imagery from the Copernicus Data Space Ecosystem for a ±15-day window around each selected date, preferring low-cloud scenes, then runs the existing image alignment, building-like change and vegetation-change pipeline.
+
+Configure a Copernicus Data Space OAuth client-credentials application and set:
+
+```env
+CDSE_CLIENT_ID=your-client-id
+CDSE_CLIENT_SECRET=your-client-secret
+```
+
+Restart the backend after setting these values. The date displayed in the comparison is the requested target date; the actual scene may be selected from the surrounding 30-day window. Sentinel-2 is approximately 10 m resolution for visible/NIR bands: it can help screen larger structures and vegetation trends, but it cannot reliably identify small buildings, establish encroachment legality, or replace high-resolution imagery and authorised railway land boundaries. A low-alert result is not a safety certification.
+
+The included Delhi section windows and track centerlines are prototype inspection footprints derived from the app's existing corridor coordinates. Before operational use, replace/verify them against authorised railway GIS geometry and official land-boundary polygons. No official boundary polygon is currently configured.
